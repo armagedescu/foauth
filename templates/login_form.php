@@ -1,7 +1,3 @@
-<?php
-//$loggedin = false;
-//"{"action":"register","registertype":"facebook","fbuser":{"name":"Ion Filipski","id":"4021364614544201"}}"
-?>
 <div class="login-form-container">
     is logged in: <?php is_user_logged_in(); ?><br/>
     <?php if ( $attributes['show_title'] ) : ?>
@@ -30,7 +26,6 @@
     <?php endif; ?>
 
 <script>
-
    window.fbAsyncInit = () =>
       {
          FB.init(
@@ -71,97 +66,58 @@
          });
    }
 
-   function registerHttpRestJson(refresh)
+
+   //const WP_JSON_REGISTER_URL = "/?rest_route=/f/oauth/v1/register";
+   const WP_JSON_REGISTER_URL = "/wp-json/f/oauth/v1/register";
+
+   function processRegisterResponse(xhttp, refresh)
+   {
+      if (xhttp.readyState == XMLHttpRequest.DONE && xhttp.status == 200)
+      {
+         let response = JSON.parse(xhttp.responseText);
+         console.log (xhttp.responseText);
+         if (refresh && response.registered.status == "ok")
+         {
+            switch(response.registered.type)
+            {
+               case "new":
+               case "login":
+               window.location = window.location.href;
+               break;
+            }
+         }
+      }
+   }
+
+   function registerJsonRest (request, refresh)
    {
       let xhttp = new XMLHttpRequest();
-      // /wp-json/f/oauth/v1/register
-      xhttp.open("POST", "/wp-json/f/oauth/v1/register", true);
-      //xhttp.open("POST", "/?rest_route=/f/oauth/v1/register", true);
-      xhttp.onreadystatechange = () =>
-         {
-            if (xhttp.readyState == XMLHttpRequest.DONE && xhttp.status == 200)
-            {
-               let response = JSON.parse(xhttp.responseText);
-               console.log (xhttp.responseText);
-               if (refresh && response.registered.status == "ok")
-                  switch(response.registered.type) { case "new": case "login": window.location = window.location.href; break; }
-            }
-         };
+      xhttp.open("POST", WP_JSON_REGISTER_URL, true);
+      xhttp.onreadystatechange = () => processRegisterResponse(xhttp, refresh);
       xhttp.setRequestHeader("Content-type", "application/json");
       xhttp.setRequestHeader("Accept", "application/json");
-	  let fbResponse = {"name":"Ion Filipski","id":"4021364614544201"};
-      let action = {action:"register", registertype:"facebook", fbuser:fbResponse};
+
+      let action = {action:"register", registertype:"facebook", fbuser:request};
       xhttp.send(JSON.stringify(action));
+   }
+
+   function registerHttpRestJson(refresh)
+   {
+      registerJsonRest ({"name":"Ion Filipski","id":"4021364614544201"}, refresh);
    }
    function registerHttpRestJsonArmagedescu(refresh)
    {
-      let xhttp = new XMLHttpRequest();
-      // /wp-json/f/oauth/v1/register
-      xhttp.open("POST", "/wp-json/f/oauth/v1/register", true);
-      //xhttp.open("POST", "/?rest_route=/f/oauth/v1/register", true);
-      xhttp.onreadystatechange = () =>
-         {
-            if (xhttp.readyState == XMLHttpRequest.DONE && xhttp.status == 200)
-            {
-               let response = JSON.parse(xhttp.responseText);
-               console.log (xhttp.responseText);
-               if (refresh && response.registered.status == "ok")
-                  switch(response.registered.type) { case "new": case "login": window.location = window.location.href; break; }
-            }
-         };
-      xhttp.setRequestHeader("Content-type", "application/json");
-      xhttp.setRequestHeader("Accept", "application/json");
-	  let fbResponse = {"name":"armagedescu","id":"bazz4021364614544201"};
-      let action = {action:"register", registertype:"facebook", fbuser:fbResponse};
-      xhttp.send(JSON.stringify(action));
+      registerJsonRest ({"name":"armagedescu","id":"bazz4021364614544201"}, refresh);
    }
    function registerHttpRestJsonIon(refresh)
    {
-      let xhttp = new XMLHttpRequest();
-      // /wp-json/f/oauth/v1/register
-      xhttp.open("POST", "/wp-json/f/oauth/v1/register", true);
-      //xhttp.open("POST", "/?rest_route=/f/oauth/v1/register", true);
-      xhttp.onreadystatechange = () =>
-         {
-            if (xhttp.readyState == XMLHttpRequest.DONE && xhttp.status == 200)
-            {
-               let response = JSON.parse(xhttp.responseText);
-               console.log (xhttp.responseText);
-               if (refresh && response.registered.status == "ok")
-                  switch(response.registered.type) { case "new": case "login": window.location = window.location.href; break; }
-            }
-         };
-      xhttp.setRequestHeader("Content-type", "application/json");
-      xhttp.setRequestHeader("Accept", "application/json");
-	  let fbResponse = {"name":"ion","id":"bar4021364614544201"};
-      let action = {action:"register", registertype:"facebook", fbuser:fbResponse};
-      xhttp.send(JSON.stringify(action));
+      registerJsonRest ({"name":"ion","id":"bar4021364614544201"}, refresh);
    }
 
    function registerFacebookRestJson(refresh)
    {
       console.log('Welcome!  Fetching your information.... ');
-      FB.api('/me', (fbResponse) =>
-         {
-            //console.log('FB Login for: name=' + fbResponse.name + "; id=" + fbResponse.id);
-            let xhttp = new XMLHttpRequest();
-			xhttp.open("POST", "/wp-json/f/oauth/v1/register", true);
-			//xhttp.open("POST", "/?rest_route=/f/oauth/v1/register", true);
-            xhttp.onreadystatechange = () =>
-               {
-                  if (xhttp.readyState == XMLHttpRequest.DONE && xhttp.status == 200)
-                  {
-                     console.log (xhttp.responseText);
-                     let response = JSON.parse(xhttp.responseText);
-                     if (response.registered.status == "ok" && refresh)
-                        switch(response.registered.type) { case "new": case "login": window.location = window.location.href; break; }
-                  }
-               };
-            xhttp.setRequestHeader("Content-type", "application/json");
-            xhttp.setRequestHeader("Accept",       "application/json");
-            let action = {action:"register", registertype:"facebook", fbuser:fbResponse};
-            xhttp.send(JSON.stringify(action));
-         });
+      FB.api('/me', (fbResponse) => registerJsonRest (fbResponse, refresh));
    }
 
 </script>
@@ -171,7 +127,6 @@
          crossorigin="anonymous"
          src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v6.0&appId=202296971138317&autoLogAppEvents=1"></script>
 
-<?php //if(!$loggedin) { error_log("content: " . $loggedin); ?>
 <?php { ?>
    <div class="fb-login-button" data-width="" data-size="medium"
          data-button-type="continue_with"
@@ -188,14 +143,14 @@
          data-use-continue-as="false"
          onlogin="onFacebookLogin();"></div><br/>
 <?php } ?>
-   <button onclick="javascript:getLoginStatus()"                   >Get login status</button><br/>
-   <button onclick="javascript:register()"                         >Register Me</button><br/>
+   <button onclick="javascript:getLoginStatus()"                       >Get login status</button><br/>
+   <button onclick="javascript:register()"                             >Register Me</button><br/>
    <button onclick="javascript:registerHttpRestJson(true)"             >Register Me 3</button><br/>
    <button onclick="javascript:registerHttpRestJson(false)"            >Register Me StandBy</button><br/>
    <button onclick="javascript:registerHttpRestJsonArmagedescu(true)"  >Register Me Armagedescu</button><br/>
    <button onclick="javascript:registerHttpRestJsonArmagedescu(false)" >Register Me Armagedescu StandBy</button><br/>
-   <button onclick="javascript:registerHttpRestJsonIon(false)" >Register Me Ion StandBy</button><br/>
-<?php //if($loggedin) { ?>
+   <button onclick="javascript:registerHttpRestJsonIon(false)"         >Register Me Ion StandBy</button><br/>
+
 <?php if(false) { ?>
    <form action="fb.php" method="POST">
       <input type="hidden" name="action" value="logout" />

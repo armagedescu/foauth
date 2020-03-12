@@ -1,13 +1,4 @@
 <?php
-$loggedin = false;
-
-
-#$yyuser = wp_insert_user();
-
-#if ($xxuser instanceof WP_User) error_log ("xxuser is WP_User"); //yes
-#if ($xxuser instanceof FB_User) error_log ("xxuser is FB_User"); //yes
-#error_log ("xxuser type is:"  . gettype($xxuser));               //object
-#error_log ("xxuser class is:" . get_class($xxuser));             //FB_User
 
 class Personalize_Login_Plugin
 {
@@ -16,20 +7,20 @@ class Personalize_Login_Plugin
        add_shortcode( 'custom-login-form', array( $this, 'render_login_form'        ) );
 	   add_action   ( 'login_form_login',  array( $this, 'redirect_to_custom_login' ) );
 	   add_filter   ( 'login_redirect',    array( $this, 'redirect_after_login'     ), 10, 3 );
-	   add_action   ( 'wp_logout',         array( $this, 'redirect_after_logout' ) );
-	   //error_log("ctor: Member login URL: " . home_url( 'member-login' ));
-	   //error_log("ctor: Short code added. Action added");
+	   add_action   ( 'wp_logout',         array( $this, 'redirect_after_logout'    ) );
+	   error_log (__CLASS__ . "." . __FUNCTION__ . "()");
     }
+
 	function redirect_to_custom_login()
 	{
-		error_log (__FUNCTION__ . "() method: " .  $_SERVER['REQUEST_METHOD']);
+		error_log (__CLASS__ . "." . __FUNCTION__ . "() method: " .  $_SERVER['REQUEST_METHOD']);
 		if ( $_SERVER['REQUEST_METHOD'] == 'GET' )
 		{
 			$redirect_to = isset( $_REQUEST['redirect_to'] ) ? $_REQUEST['redirect_to'] : null;
 		 
 			if ( is_user_logged_in() )
 			{
-				error_log (__FUNCTION__ . "  if (is_user_logged_in() ) redirect_to = " . $redirect_to);
+				error_log (__CLASS__ . "." . __FUNCTION__ . "()" . "  if (is_user_logged_in() ) redirect_to = " . $redirect_to);
 				$this->redirect_logged_in_user( $redirect_to );
 				exit;
 			}
@@ -49,11 +40,12 @@ class Personalize_Login_Plugin
 		$attributes = shortcode_atts( $default_attributes, $attributes );
 		if (isset( $_REQUEST['logged_out'] ) && $_REQUEST['logged_out'] == true)
         {
-           error_log (__FUNCTION__ . "(): is log out");
+           error_log (__CLASS__ . "." . __FUNCTION__ . "(): is log out");
         }
 		$attributes['logged_out'] = (isset( $_REQUEST['logged_out'] ) && $_REQUEST['logged_out'] == true);
 		$show_title = $attributes['show_title'];
 	 
+        error_log (__CLASS__  . "." . __FUNCTION__ . "(): is already logged in: is_user_logged_in(): " . is_user_logged_in());
 		if ( is_user_logged_in() )
 			return __( 'You are already signed in.', 'personalize-login' );
 	
@@ -122,7 +114,7 @@ class Personalize_Login_Plugin
 
 	public static function plugin_activated()
 	{
-		error_log ( "Plugin activated <br/>");
+		error_log ( __CLASS__ . "::" . __FUNCTION__ . "(): Plugin activated");
 		//throw new Exception("FBAuth Plugin Activated");
 		// Information needed for creating the plugin's pages
 		$page_definitions = array
@@ -164,27 +156,32 @@ class Personalize_Login_Plugin
 
 
 $personalize_login_pages_plugin = new Personalize_Login_Plugin();
-register_activation_hook( __FILE__, array( 'Personalize_Login_Plugin', 'plugin_activated' ) );
-
+//register_activation_hook( __FILE__, array( 'Personalize_Login_Plugin', 'plugin_activated' ) );
+register_activation_hook( __FILE__, 'plugin_activated_hook');
 Personalize_Login_Plugin::plugin_activated();
 
+function plugin_activated_hook()
+{
+   error_log ("::" . __FUNCTION__ . "()");
+   Personalize_Login_Plugin::plugin_activated();
+}
 /*
-function my_custom_login()
-{
-   $x= 'BAZZ:<link rel="stylesheet" type="text/css" href="' . get_bloginfo('stylesheet_directory') . '/login/custom-login-style.css" />';
-}
-add_action('login_head', 'my_custom_login');
-
-function wp_authenticate_fb ($arg)
-{
-	$wperr = new WP_Error( 'authentication_failed', __( '<strong>ERROR</strong>: blablabla' ) );
-	do_action( 'wp_login_failed', $wperr);
-	return $wperr;
-}
-add_filter( 'authenticate', 'wp_authenticate_fb', 1 );
-//remove_filter( 'authenticate', 'wp_authenticate_username_password', 20, 3 );
-#remove_action( 'authenticate', 'wp_authenticate_username_password', 20, 3 );
-#remove_action( 'authenticate', 'wp_authenticate_email_password', 20, 3 );
+//function my_custom_login()
+//{
+//   $x= 'BAZZ:<link rel="stylesheet" type="text/css" href="' . get_bloginfo('stylesheet_directory') . '/login/custom-login-style.css" />';
+//}
+//add_action('login_head', 'my_custom_login');
+//
+//function wp_authenticate_fb ($arg)
+//{
+//	$wperr = new WP_Error( 'authentication_failed', __( '<strong>ERROR</strong>: blablabla' ) );
+//	do_action( 'wp_login_failed', $wperr);
+//	return $wperr;
+//}
+//add_filter( 'authenticate', 'wp_authenticate_fb', 1 );
+////remove_filter( 'authenticate', 'wp_authenticate_username_password', 20, 3 );
+//#remove_action( 'authenticate', 'wp_authenticate_username_password', 20, 3 );
+//#remove_action( 'authenticate', 'wp_authenticate_email_password', 20, 3 );
 */
 
 ?>

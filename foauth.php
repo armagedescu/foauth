@@ -14,21 +14,23 @@ Author URI: http://
 
 error_log("## foauth start!!!");
 
+include 'login.php';
+include 'includes/wporg.php';
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST')
 {
    $entityBody  = file_get_contents('php://input');
-   error_log (__FILE__ . ": POST: " . $entityBody);
+   error_log ("## HTTP POST: " . $entityBody);
    
    if ($_SERVER["CONTENT_TYPE"] === 'application/json')
    {
-      error_log ("## POST json:   " . $entityBody);
+      error_log ("## HTTP POST json:   " . $entityBody);
       $rest = json_decode($entityBody);
-      error_log ("## POST action: " . $rest->action);
+      error_log ("## HTTP POST action: " . $rest->action);
    }
 }
 
-include 'login.php';
-include 'includes/wporg.php';
 
 function f_oauth_register_rest( $request )
 {
@@ -58,7 +60,7 @@ add_action( 'rest_api_init', function()
 
 function register_or_login($rest)
 {
-   error_log ("password: " . wp_hash_password('facebook_la_toti'));
+//   error_log ("password: " . wp_hash_password('facebook_la_toti'));
    if($rest ['registertype'] === 'facebook')
       return register_or_login_facebook ($rest);
    return true;
@@ -94,12 +96,13 @@ function register_or_login_facebook($rest)
       }
       if (!is_user_logged_in())
       {
-         error_log ('LOGIN: is not logged in id:' . $user->ID . "; login:" . $user->user_login);
+         error_log ('## LOGIN: is not logged in id:' . $user->ID . "; login:" . $user->user_login);
          //wp_clear_auth_cookie();
          wp_set_auth_cookie  ( $user->ID, false );
          //$usr = wp_set_current_user ( $user->ID, $user->user_login);
+		 do_action( 'wp_login', $user->user_login );
 		 //var_dump ($usr);
-         error_log ('## LOGIN: is logged in: ' . is_user_logged_in());
+         error_log ('## LOGIN: is logged in: is_user_logged_in():' . is_user_logged_in());
          //wp_safe_redirect( user_admin_url() );
          //exit();
       }
@@ -115,7 +118,7 @@ function register_or_login_facebook($rest)
 
 function check_fb_user($usertype, $externalid)
 {
-   error_log ('## check_fb_user external_id:' . $externalid);
+   error_log ('## ' . __FUNCTION__ . '() external_id:' . $externalid);
    $user = get_users(array(
             'meta_key'     => 'f_oauth_facebook_id',
             'meta_value'   => $externalid,
@@ -123,15 +126,15 @@ function check_fb_user($usertype, $externalid)
          ));
    if ($user == null || (is_array($user) && count($user) < 1)) return null;
 
-   if (is_array($user) && count($user) > 1)  error_log ('## check_fb_user warning error: found user duplicates');
+   if (is_array($user) && count($user) > 1)  error_log ('## ' . __FUNCTION__ . '() warning error: found user duplicates');
    if (is_array($user) && count($user) > 0)  $user = $user[0];
 
-   if (is_wp_error ($result) )
-      error_log ('## check_fb_user error:  code:' . $result->get_error_code() . '; message:' . $result->get_error_message () );
+   if (is_wp_error ($user) )
+      error_log ('## ' . __FUNCTION__ . '() error:  code:' . $user->get_error_code() . '; message:' . $user->get_error_message () );
    else if (! $user instanceof WP_User)
       error_log ("## Check facebook user: not an instance of facebook user");
 
-   error_log ('## check_fb_user id:' . $user->ID);
+   error_log ('## ' . __FUNCTION__ . '() id:' . $user->ID);
 
    return $user;
 }
@@ -152,10 +155,10 @@ function register_fb_user($username, $usertype, $externalid)
    //$result = wp_create_user( $username, 'facebook_la_toti', $user_email );
    if ($result instanceof WP_Error)
    {
-      error_log ('## registration error:  code:' . $result->get_error_code() . '; message:' . $result->get_error_message () );
+      error_log ('## ' . __FUNCTION__ . '() registration error:  code:' . $result->get_error_code() . '; message:' . $result->get_error_message () );
       if ($result->get_error_code() === 'existing_user_login')
       {
-         error_log ('## registration error: duplicate user'); //existing_user_login
+         error_log ('## ' . __FUNCTION__ . '() registration error: duplicate user'); //existing_user_login
          $result = $result; //try resolve user duplication
       }
       return $result;
@@ -165,9 +168,9 @@ function register_fb_user($username, $usertype, $externalid)
       $fb_user_id = $result;
       add_user_meta( $fb_user_id, 'f_oauth_facebook_id', $externalid, true /*unique*/ );
       $user = get_user_by('id', $fb_user_id);
-      if ($user == null) error_log ('## registration load?: null' );
-      if (is_wp_error ($user) ) error_log ('## registration load error:' . $user->get_error_message ());
-      if ($user instanceof WP_User)  error_log ('## registration WP Success:');
+      if ($user == null) error_log ('## ' . __FUNCTION__ . '() registration load?: null' );
+      if (is_wp_error ($user) ) error_log ('## ' . __FUNCTION__ . '() registration load error:' . $user->get_error_message ());
+      if ($user instanceof WP_User)  error_log ('## ' . __FUNCTION__ . '() registration WP Success:');
       return $user;
    }
    return null;
