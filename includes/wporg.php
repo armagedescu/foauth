@@ -1,6 +1,7 @@
 <?php
-
+#error_log("wporg start");
 function wporg_options_page_html() {
+    error_log(__FUNCTION__ . "()");
     ?>
     <div class="wrap">
       <h1><?php esc_html( get_admin_page_title() ); ?></h1>
@@ -20,6 +21,7 @@ function wporg_options_page_html() {
 }
 add_action( 'admin_menu', 'wporg_options_page' );
 function wporg_options_page() {
+    error_log(__FUNCTION__ . "()");
     add_menu_page(
         'WPOrg',
         'WPOrg Optionz',
